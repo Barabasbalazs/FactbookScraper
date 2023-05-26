@@ -1,4 +1,4 @@
-module github.com/Barabasbalazs/FactbookScraper
+module github.com/Barabasbalazs/factbookscraper
 
 go 1.20
 
