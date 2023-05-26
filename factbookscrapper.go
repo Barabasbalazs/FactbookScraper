@@ -1,17 +1,15 @@
-package main
+package factbookscrapper
 
 import (
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/gocolly/colly"
 )
 
-func ScrapeCountry(uri string) {
+func ScrapeCountry(uri string) []byte {
 
 	defer func() {
 		log.Println("Finished scraping " + uri)
@@ -19,7 +17,10 @@ func ScrapeCountry(uri string) {
 	// Instantiate default collector
 	c := colly.NewCollector()
 
+	countryName := uri[11 : len(uri)-1]
+
 	countryInformation := make(map[string]interface{})
+	countryInformation["countryName"] = countryName
 
 	c.OnHTML("div.free-form-content__content", func(e *colly.HTMLElement) {
 		sectionTitle := e.ChildText("h2")
@@ -41,12 +42,11 @@ func ScrapeCountry(uri string) {
 		log.Println(err.Error())
 	}
 
-	countryName := uri[11 : len(uri)-1]
-
-	os.WriteFile("results/"+countryName+".json", content, 0644)
+	return content
+	//os.WriteFile("results/"+countryName+".json", content, 0644)
 }
 
-func main() {
+func GetListOfCountries() []interface{} {
 	res, err := http.Get("https://www.cia.gov/the-world-factbook/page-data/countries/page-data.json")
 	if err != nil {
 		log.Println(err.Error())
@@ -61,11 +61,23 @@ func main() {
 	var jsonData interface{}
 	json.Unmarshal(resBody, &jsonData)
 
-	data := jsonData.(map[string]interface{})["result"].(map[string]interface{})["data"].(map[string]interface{})["countries"].(map[string]interface{})["edges"].([]interface{})
+	rawData := jsonData.(map[string]interface{})["result"].(map[string]interface{})["data"].(map[string]interface{})["countries"].(map[string]interface{})["edges"].([]interface{})
 
-	for _, country := range data {
-		countryUri := country.(map[string]interface{})["node"].(map[string]interface{})["uri"].(string)
-		go ScrapeCountry(countryUri)
+	countryUriList := make([]interface{}, len(rawData))
+
+	for i, nodeData := range rawData {
+		countryUriList[i] = nodeData.(map[string]interface{})["node"].(map[string]interface{})["uri"].(string)
 	}
-	time.Sleep(10 * time.Second)
+
+	return countryUriList
 }
+
+// func main() {
+// 	countryUriList := GetListOfCountries()
+
+// 	for _, countryUri := range countryUriList {
+// 		go ScrapeCountry(countryUri.(string))
+// 	}
+
+// 	time.Sleep(10 * time.Second)
+// }
