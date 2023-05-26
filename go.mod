@@ -1,4 +1,4 @@
-module scraper
+module github.com/Barabasbalazs/FactbookScraper
 
 go 1.20
 

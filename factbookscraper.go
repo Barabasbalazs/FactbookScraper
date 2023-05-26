@@ -1,4 +1,4 @@
-package scraper
+package FactbookScraper
 
 import (
 	"encoding/json"
